@@ -3,11 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="CosmeticsApp.MainPage">
 
-    <ScrollView>
+    <ScrollView x:Name ="MainScrollView" Orientation="Vertical">
         <VerticalStackLayout
+            x:Name="MainStack"
             Padding="30,0"
             Spacing="25">
-            <Label x:Name="myLabel" Text="Hello!"/>
+            <Button Text="Личный кабинет" Clicked="onLoginButton" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium"/>
         </VerticalStackLayout>
     </ScrollView>
 

@@ -63,4 +63,10 @@
 		<PackageReference Include="Npgsql" Version="8.0.2" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <MauiXaml Update="AccountPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	</ItemGroup>
+
 </Project>

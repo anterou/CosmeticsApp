@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CosmeticsApp.AccountPage">
+
+    <ScrollView Orientation="Vertical">
+        <VerticalStackLayout
+            Padding="30,0"
+            Spacing="25">
+            <Label Text="" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium"/>
+            <Button Text="Вернуться" Clicked="onBack" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium"/>
+            <Label  Text="Введите логин и пароль для входа или зарегистрируйтесь." HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium"/>
+            <Entry Placeholder="Введите логин"
+           Keyboard="Email"
+           Margin="0,0,0,10"
+           x:Name="loginEntry" />
+
+            <!-- Поле ввода пароля -->
+            <Entry Placeholder="Введите пароль"
+           IsPassword="true"
+           x:Name="passwordEntry" />
+
+            <!-- Кнопка входа -->
+            <Button Text="Войти"
+            Clicked="onLogin" />
+            <Button Text="Зарегистрироваться"
+Clicked="onRegister" />
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

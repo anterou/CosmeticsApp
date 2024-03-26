@@ -11,5 +11,11 @@
         Title="Магазин косметики"
         ContentTemplate="{DataTemplate local:MainPage}"
         Route="MainPage" />
+    <ShellItem Route="HomePage">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+    </ShellItem>
+    <ShellItem Route="AccountPage">
+        <ShellContent ContentTemplate="{DataTemplate local:AccountPage}" />
+    </ShellItem>
 
 </Shell>

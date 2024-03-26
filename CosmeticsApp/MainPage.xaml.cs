@@ -1,14 +1,17 @@
 ﻿using Npgsql;
 using System.Data;
+using System.Security.Cryptography.X509Certificates;
 
 namespace CosmeticsApp
 {
     public partial class MainPage : ContentPage
     {
+        public bool isAuth { get; set; }
+        public string name { get; set; }
         public MainPage()
         {
             InitializeComponent();
-
+            
             string connString = "Host=localhost;Username=postgres;Password=qwerty;Database=cosmetics";
             NpgsqlConnection nc = new NpgsqlConnection(connString);
 
@@ -100,14 +103,19 @@ namespace CosmeticsApp
 
                 nc.Close();
 
-                ScrollView scrollView = new ScrollView
-{
-    Content = grid,
-    VerticalOptions = LayoutOptions.FillAndExpand // убедитесь, что ScrollView занимает всю доступную высоту
-};
+               
 
-                Content = scrollView;
+               MainStack.Children.Add(grid);
             }
+            
+           
+        }
+        private async void onLoginButton(object sender, EventArgs e)
+        {
+            var accountPage = new AccountPage();
+            accountPage.isAuth = isAuth;
+            accountPage.name = name;
+            await Navigation.PushAsync(accountPage);
         }
     }
 }
