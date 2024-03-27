@@ -48,17 +48,34 @@ namespace CosmeticsApp
                         new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
                     }
                 };
-
+                
+               
+                
                 int row = 0;
                 int col = 0;
                 while (reader.Read())
                 {
+                    Button buyButton = new Button
+                    {
+                        Text = "Купить",
+                        FontSize = Device.GetNamedSize(NamedSize.Small, typeof(Button)),
+                        HorizontalOptions = LayoutOptions.Start,
+                        BackgroundColor = Color.FromRgb(255, 0, 0)
+
+                    };
+
+
+                    buyButton.Clicked += async (sender, e) =>
+                    {
+                        await DisplayAlert("Success", "Товар куплен", "OK");
+                    };
                     var productFrame = new Frame
                     {
                         Margin = new Thickness(15),
                         Padding = new Thickness(5),
                         BackgroundColor = Color.FromRgb(105, 105, 105),
                         CornerRadius = 5,
+
                         Content = new StackLayout
                         {
                             Children =
@@ -84,11 +101,15 @@ namespace CosmeticsApp
                                     FontSize = Device.GetNamedSize(NamedSize.Small, typeof(Label)),
                                     LineBreakMode = LineBreakMode.WordWrap,
                                     HorizontalOptions = LayoutOptions.StartAndExpand
-                                }
+                                },
+                                buyButton,
+                                
+                                
                             }
                         }
+                        
                     };
-
+                    
                     Grid.SetRow(productFrame, row);
                     Grid.SetColumn(productFrame, col);
                     grid.Children.Add(productFrame);
@@ -118,4 +139,61 @@ namespace CosmeticsApp
             await Navigation.PushAsync(accountPage);
         }
     }
+    /*public class PurchaseConfirmationPage : ContentPage
+    {
+        public PurchaseConfirmationPage()
+        {
+            Title = "Подтверждение покупки";
+
+            var confirmationLabel = new Label
+            {
+                Text = "Вы уверены, что хотите совершить покупку?"
+            };
+
+            Button confirmButton = new Button
+            {
+                Text = "Подтвердить",
+                TextColor = Color.FromRgb(255, 255, 255),
+            };
+
+            var cancelButton = new Button
+            {
+                Text = "Отмена",
+                TextColor = Color.FromRgb(255, 255, 255),
+            };
+
+            confirmButton.Clicked += async (s, e) =>
+            {
+                
+                // Ваша логика подтверждения покупки
+                //await HandleConfirmButtonClick();
+            };
+
+            cancelButton.Clicked += async (s, e) =>
+            {
+                // Закрытие всплывающего окна
+                await Navigation.PopAsync();
+            };
+
+            Content = new StackLayout
+            {
+                Children =
+            {
+                confirmationLabel,
+                confirmButton,
+                cancelButton
+            }
+            };
+        }
+        
+        async Task HandleConfirmButtonClick()
+        {
+            // Ваша логика обработки подтверждения покупки
+            // Например, выполнение действий после успешной покупки
+            await Task.Delay(1000); // Демонстрация задержки
+            await DisplayAlert("Покупка", "Покупка успешно подтверждена", "OK");
+            await Navigation.PopAsync(); // Закрытие всплывающего окна
+        }
+    }
+    */
 }
