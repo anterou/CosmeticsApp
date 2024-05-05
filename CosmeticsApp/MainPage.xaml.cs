@@ -8,10 +8,12 @@ namespace CosmeticsApp
     {
         public bool isAuth { get; set; }
         public string name { get; set; }
+        private Frame selectedProductFrame;
+
         public MainPage()
         {
             InitializeComponent();
-            
+
             string connString = "Host=localhost;Username=postgres;Password=qwerty;Database=cosmetics";
             NpgsqlConnection nc = new NpgsqlConnection(connString);
 
@@ -33,26 +35,28 @@ namespace CosmeticsApp
                 string query = "SELECT production.name, categories.name, price from production inner join categories on production.category = categories.category_id";
                 using var command = new NpgsqlCommand(query, nc);
                 using var reader = command.ExecuteReader();
+
+                int maxRows = 20; // Максимальное число строк
+                int maxCols = 2; // Максимальное число столбцов
+                int currentRow = 0;
+                int currentCol = 0;
+
                 Grid grid = new Grid
                 {
-                    RowDefinitions = new RowDefinitionCollection
-                    {
-                        new RowDefinition { Height = new GridLength(1, GridUnitType.Star) },
-                        new RowDefinition { Height = new GridLength(1, GridUnitType.Star) },
-                        new RowDefinition { Height = new GridLength(1, GridUnitType.Star) },
-                        new RowDefinition { Height = new GridLength(1, GridUnitType.Star) },
-                    },
-                    ColumnDefinitions = new ColumnDefinitionCollection
-                    {
-                        new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) },
-                        new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
-                    }
+                    RowDefinitions = new RowDefinitionCollection(),
+                    ColumnDefinitions = new ColumnDefinitionCollection()
                 };
-                
-               
-                
-                int row = 0;
-                int col = 0;
+
+                for (int i = 0; i < maxRows; i++)
+                {
+                    grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                }
+
+                for (int i = 0; i < maxCols; i++)
+                {
+                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                }
+
                 while (reader.Read())
                 {
                     Button buyButton = new Button
@@ -60,22 +64,25 @@ namespace CosmeticsApp
                         Text = "Купить",
                         FontSize = Device.GetNamedSize(NamedSize.Small, typeof(Button)),
                         HorizontalOptions = LayoutOptions.Start,
-                        BackgroundColor = Color.FromRgb(255, 0, 0)
-
+                        BackgroundColor = Color.FromRgb(205, 92, 92)
                     };
-
 
                     buyButton.Clicked += async (sender, e) =>
                     {
-                        await DisplayAlert("Success", "Товар куплен", "OK");
+                        if (isAuth)
+                        {
+                            selectedProductFrame = (Frame)((Button)sender).Parent.Parent;
+                            await HandleConfirmButtonClick();
+                        }
+                        else await DisplayAlert("Ошибка", "Для покупки необходимо авторизоваться", "OK");
                     };
+
                     var productFrame = new Frame
                     {
                         Margin = new Thickness(15),
                         Padding = new Thickness(5),
                         BackgroundColor = Color.FromRgb(105, 105, 105),
                         CornerRadius = 5,
-
                         Content = new StackLayout
                         {
                             Children =
@@ -102,35 +109,28 @@ namespace CosmeticsApp
                                     LineBreakMode = LineBreakMode.WordWrap,
                                     HorizontalOptions = LayoutOptions.StartAndExpand
                                 },
-                                buyButton,
-                                
-                                
+                                buyButton
                             }
                         }
-                        
                     };
-                    
-                    Grid.SetRow(productFrame, row);
-                    Grid.SetColumn(productFrame, col);
+
+                    Grid.SetRow(productFrame, currentRow);
+                    Grid.SetColumn(productFrame, currentCol);
                     grid.Children.Add(productFrame);
 
-                    col++;
-                    if (col == 2)
+                    currentCol++;
+                    if (currentCol == maxCols)
                     {
-                        row++;
-                        col = 0;
+                        currentRow++;
+                        currentCol = 0;
                     }
                 }
 
                 nc.Close();
-
-               
-
-               MainStack.Children.Add(grid);
+                MainStack.Children.Add(grid);
             }
-            
-           
         }
+
         private async void onLoginButton(object sender, EventArgs e)
         {
             var accountPage = new AccountPage();
@@ -138,62 +138,101 @@ namespace CosmeticsApp
             accountPage.name = name;
             await Navigation.PushAsync(accountPage);
         }
-    }
-    /*public class PurchaseConfirmationPage : ContentPage
-    {
-        public PurchaseConfirmationPage()
-        {
-            Title = "Подтверждение покупки";
 
-            var confirmationLabel = new Label
-            {
-                Text = "Вы уверены, что хотите совершить покупку?"
-            };
-
-            Button confirmButton = new Button
-            {
-                Text = "Подтвердить",
-                TextColor = Color.FromRgb(255, 255, 255),
-            };
-
-            var cancelButton = new Button
-            {
-                Text = "Отмена",
-                TextColor = Color.FromRgb(255, 255, 255),
-            };
-
-            confirmButton.Clicked += async (s, e) =>
-            {
-                
-                // Ваша логика подтверждения покупки
-                //await HandleConfirmButtonClick();
-            };
-
-            cancelButton.Clicked += async (s, e) =>
-            {
-                // Закрытие всплывающего окна
-                await Navigation.PopAsync();
-            };
-
-            Content = new StackLayout
-            {
-                Children =
-            {
-                confirmationLabel,
-                confirmButton,
-                cancelButton
-            }
-            };
-        }
-        
         async Task HandleConfirmButtonClick()
         {
-            // Ваша логика обработки подтверждения покупки
-            // Например, выполнение действий после успешной покупки
-            await Task.Delay(1000); // Демонстрация задержки
-            await DisplayAlert("Покупка", "Покупка успешно подтверждена", "OK");
-            await Navigation.PopAsync(); // Закрытие всплывающего окна
+            string selectedProductName = GetProductNameFromFrame(selectedProductFrame);
+            int selectedProductPrice = GetProductPriceFromFrame(selectedProductFrame);
+            if (!string.IsNullOrEmpty(selectedProductName))
+            {
+                int userId = await GetUserIdByName(name);
+                int productId = await GetProductIdByName(selectedProductName);
+
+                if (userId != -1 && productId != -1)
+                {
+                    // Сохраняем информацию о покупке в базе данных
+                    await SavePurchaseAsync(userId, productId, selectedProductPrice);
+                    await DisplayAlert("Покупка", $"Вы приобрели товар: {selectedProductName}", "OK");
+                }
+                else
+                {
+                    await DisplayAlert("Ошибка", "Не удалось определить идентификатор пользователя или товара", "OK");
+                }
+            }
+            else
+            {
+                await DisplayAlert("Ошибка", "Не удалось определить название товара", "OK");
+            }
+        }
+
+        private async Task SavePurchaseAsync(int userId, int productId, int price)
+        {
+            string connString = "Host=localhost;Username=postgres;Password=qwerty;Database=cosmetics";
+            using (var nc = new NpgsqlConnection(connString))
+            {
+                await nc.OpenAsync();
+                string query = "INSERT INTO transactions (\"user\", product, date, cost) VALUES (@userId, @productId, @purchaseDate, @cost)";
+                using var command = new NpgsqlCommand(query, nc);
+                command.Parameters.AddWithValue("@userId", userId);
+                command.Parameters.AddWithValue("@productId", productId);
+                command.Parameters.AddWithValue("@purchaseDate", DateTime.Now);
+                command.Parameters.AddWithValue("@cost", price);
+                await command.ExecuteNonQueryAsync();
+            }
+        }
+
+        private int GetProductPriceFromFrame(Frame frame)
+        {
+            if (frame.Content is StackLayout stackLayout)
+            {
+                var productPriceLabel = stackLayout.Children.OfType<Label>().LastOrDefault();
+                if (productPriceLabel != null)
+                {
+                    return Convert.ToInt32(productPriceLabel.Text.Substring(0, productPriceLabel.Text.Length - 1));
+                }
+            }
+            return 0;
+        }
+
+        private string GetProductNameFromFrame(Frame frame)
+        {
+            if (frame.Content is StackLayout stackLayout)
+            {
+                var productNameLabel = stackLayout.Children.OfType<Label>().FirstOrDefault();
+                if (productNameLabel != null)
+                {
+                    return productNameLabel.Text;
+                }
+            }
+            return string.Empty;
+        }
+
+        private async Task<int> GetUserIdByName(string userName)
+        {
+            string connString = "Host=localhost;Username=postgres;Password=qwerty;Database=cosmetics";
+            using (var nc = new NpgsqlConnection(connString))
+            {
+                await nc.OpenAsync();
+                string query = "SELECT user_id FROM users WHERE login = @userName";
+                using var command = new NpgsqlCommand(query, nc);
+                command.Parameters.AddWithValue("@userName", userName);
+                var result = await command.ExecuteScalarAsync();
+                return result != null ? (int)result : -1;
+            }
+        }
+
+        private async Task<int> GetProductIdByName(string productName)
+        {
+            string connString = "Host=localhost;Username=postgres;Password=qwerty;Database=cosmetics";
+            using (var nc = new NpgsqlConnection(connString))
+            {
+                await nc.OpenAsync();
+                string query = "SELECT product_id FROM production WHERE name = @productName";
+                using var command = new NpgsqlCommand(query, nc);
+                command.Parameters.AddWithValue("@productName", productName);
+                var result = await command.ExecuteScalarAsync();
+                return result != null ? (int)result : -1;
+            }
         }
     }
-    */
 }
